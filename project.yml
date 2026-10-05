@@ -1,0 +1,72 @@
+name: Murmur
+options:
+  minimumXcodeGenVersion: 2.44.1
+  deploymentTarget:
+    macOS: "15.0"
+  createIntermediateGroups: true
+configs:
+  Debug: debug
+  Release: release
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    MACOSX_DEPLOYMENT_TARGET: "15.0"
+    CLANG_ENABLE_MODULES: YES
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+packages:
+  Textual:
+    url: https://github.com/gonzalezreal/textual.git
+    exactVersion: 0.5.0
+targets:
+  Murmur:
+    type: application
+    platform: macOS
+    sources:
+      - path: Sources/MurmurApp
+      - path: Resources
+        buildPhase: resources
+    dependencies:
+      - sdk: Security.framework
+      - package: Textual
+    configFiles:
+      Debug: Config/Debug.xcconfig
+      Release: Config/Release.xcconfig
+    settings:
+      base:
+        PRODUCT_NAME: Murmur
+        PRODUCT_MODULE_NAME: MurmurApp
+        PRODUCT_BUNDLE_IDENTIFIER: me.openhorizons.murmur
+        MARKETING_VERSION: 0.6.0
+        CURRENT_PROJECT_VERSION: 12
+        INFOPLIST_FILE: Config/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Config/Murmur.entitlements
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ENABLE_HARDENED_RUNTIME: YES
+        CODE_SIGN_STYLE: Manual
+  MurmurTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: Tests/MurmurTests
+    dependencies:
+      - target: Murmur
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: me.openhorizons.murmur.tests
+        GENERATE_INFOPLIST_FILE: YES
+        CODE_SIGNING_ALLOWED: NO
+schemes:
+  Murmur:
+    build:
+      targets:
+        Murmur: all
+        MurmurTests: [test]
+    test:
+      config: Debug
+      targets:
+        - MurmurTests
+    run:
+      config: Debug
+    archive:
+      config: Release

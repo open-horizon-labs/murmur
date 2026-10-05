@@ -1,0 +1,28 @@
+# Local environment and credentials
+.env*
+.envrc
+.direnv/
+Config/*.local.xcconfig
+*.p12
+*.pfx
+*.pem
+*.key
+
+# Generated output and developer state
+.build/
+build/
+.swiftpm/
+*.xcodeproj/
+*.xcworkspace/
+DerivedData/
+.DS_Store
+xcuserdata/
+*.xcuserstate
+
+# Local call artifacts
+*.wav
+*.caf
+*.m4a
+*.mp3
+recordings/
+sessions/

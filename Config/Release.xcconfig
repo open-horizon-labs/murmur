@@ -1,0 +1,3 @@
+MURMUR_DISTRIBUTION_IDENTITY = Developer ID Application
+#include? "Signing.local.xcconfig"
+CODE_SIGN_IDENTITY = $(MURMUR_DISTRIBUTION_IDENTITY)

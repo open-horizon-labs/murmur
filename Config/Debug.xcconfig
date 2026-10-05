@@ -1,0 +1,3 @@
+MURMUR_DEVELOPMENT_IDENTITY = Apple Development
+#include? "Signing.local.xcconfig"
+CODE_SIGN_IDENTITY = $(MURMUR_DEVELOPMENT_IDENTITY)
