@@ -1,11 +1,6 @@
 import Foundation
+import MurmurCore
 import Security
-
-protocol TranscriptionCredentialStore {
-    func load() throws -> String?
-    func save(_ apiKey: String) throws
-    func delete() throws
-}
 
 struct OpenAIKeychainStore: TranscriptionCredentialStore {
     private let service: String
@@ -40,7 +35,7 @@ struct OpenAIKeychainStore: TranscriptionCredentialStore {
 
     func save(_ apiKey: String) throws {
         let value = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !value.isEmpty else { throw KeychainError.emptyCredential }
+        guard !value.isEmpty else { throw CredentialStoreError.emptyCredential }
         let data = Data(value.utf8)
         let attributes: [String: Any] = [kSecValueData as String: data]
         let updateStatus = SecItemUpdate(baseQuery as CFDictionary, attributes as CFDictionary)
@@ -70,27 +65,15 @@ struct OpenAIKeychainStore: TranscriptionCredentialStore {
     }
 }
 
-enum KeychainError: LocalizedError {
-    case emptyCredential
-    case status(OSStatus)
+struct KeychainError: LocalizedError {
+    let status: OSStatus
 
     init(_ status: OSStatus) {
-        self = .status(status)
+        self.status = status
     }
 
     var errorDescription: String? {
-        switch self {
-        case .emptyCredential:
-            "Enter an API key first."
-        case .status(let status):
-            SecCopyErrorMessageString(status, nil) as String?
-                ?? "Keychain returned error \(status)."
-        }
+        SecCopyErrorMessageString(status, nil) as String?
+            ?? "Keychain returned error \(status)."
     }
-}
-
-struct EmptyTranscriptionCredentialStore: TranscriptionCredentialStore {
-    func load() throws -> String? { nil }
-    func save(_ apiKey: String) throws {}
-    func delete() throws {}
 }

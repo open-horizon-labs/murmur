@@ -1,8 +1,10 @@
+import MurmurCore
 import SwiftUI
 
 @main
 struct MurmurApp: App {
-    @State private var model = AppModel()
+    @State private var model = AppModel(capture: AudioCaptureCoordinator(), credentialStore: OpenAIKeychainStore())
+    @State private var liveCall = LiveCallSetup.makeModel()
     @NSApplicationDelegateAdaptor(MurmurQuitDelegate.self) private var quitDelegate
 
     var body: some Scene {
@@ -16,6 +18,16 @@ struct MurmurApp: App {
         .defaultPosition(.center)
         .windowResizability(.contentMinSize)
 
+        Window("Live Call", id: LiveCallWindow.id) {
+            LiveCallView(model: liveCall)
+        }
+        .defaultSize(width: 980, height: 700)
+        .commands { LiveCallCommands() }
+
+        Settings {
+            LiveCallSettingsView()
+        }
+
         MenuBarExtra("Murmur", systemImage: menuBarSymbol) {
             MenuBarControls(model: model)
         }
@@ -24,6 +36,22 @@ struct MurmurApp: App {
 
     private var menuBarSymbol: String {
         model.phase.isActive ? "waveform.circle.fill" : "waveform.circle"
+    }
+}
+
+enum LiveCallWindow {
+    static let id = "live-call"
+}
+
+/// File > Live Call (Shift-Command-L) opens the live-call window next to the Murmur companion window.
+private struct LiveCallCommands: Commands {
+    @Environment(\.openWindow) private var openWindow
+
+    var body: some Commands {
+        CommandGroup(after: .newItem) {
+            Button("Live Call") { openWindow(id: LiveCallWindow.id) }
+                .keyboardShortcut("l", modifiers: [.command, .shift])
+        }
     }
 }
 

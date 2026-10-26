@@ -2,6 +2,7 @@ import AppKit
 import SwiftUI
 import XCTest
 @testable import MurmurApp
+@testable import MurmurCore
 
 @MainActor
 final class AgentMarkdownTests: XCTestCase {

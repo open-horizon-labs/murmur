@@ -18,6 +18,9 @@ packages:
   Textual:
     url: https://github.com/gonzalezreal/textual.git
     exactVersion: 0.5.0
+  # MurmurCore (the shared, platform-neutral library) lives in this repo's SwiftPM package.
+  MurmurPackage:
+    path: .
 targets:
   Murmur:
     type: application
@@ -29,6 +32,8 @@ targets:
     dependencies:
       - sdk: Security.framework
       - package: Textual
+      - package: MurmurPackage
+        product: MurmurCore
     configFiles:
       Debug: Config/Debug.xcconfig
       Release: Config/Release.xcconfig
@@ -51,6 +56,8 @@ targets:
       - path: Tests/MurmurTests
     dependencies:
       - target: Murmur
+      - package: MurmurPackage
+        product: MurmurCore
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: me.openhorizons.murmur.tests

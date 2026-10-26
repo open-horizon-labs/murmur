@@ -2,6 +2,7 @@ import CoreMedia
 import Foundation
 import XCTest
 @testable import MurmurApp
+@testable import MurmurCore
 
 final class AudioCaptureTests: XCTestCase {
     func testMixerAlignsOffsetSourcesAndPreservesUnevenChunkTails() throws {

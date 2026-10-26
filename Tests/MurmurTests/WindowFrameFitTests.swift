@@ -1,6 +1,7 @@
 import AppKit
 import XCTest
 @testable import MurmurApp
+@testable import MurmurCore
 
 final class WindowFrameFitTests: XCTestCase {
     func testPreservesFrameThatAlreadyFits() {
