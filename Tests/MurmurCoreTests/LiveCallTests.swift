@@ -145,7 +145,7 @@ final class LiveResilientTests: XCTestCase {
         XCTAssertEqual(result.text, "hello there")
         XCTAssertEqual(result.backend, "homelab")
         XCTAssertEqual(partials.values.last, "hel")
-        XCTAssertEqual(socket.sentBinary, 2)
+        XCTAssertEqual(socket.sentBinary, 3)   // one second of lead-in silence, then the two chunks
         let start = JSONValue.parse(socket.sentText.first ?? "")
         XCTAssertEqual(start?["type"]?.stringValue, "start")
         XCTAssertEqual(start?["sample_rate"]?.intValue, 16000)

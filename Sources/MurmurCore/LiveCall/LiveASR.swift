@@ -135,6 +135,9 @@ public struct HomelabASR: ASRBackend {
             let start: JSONValue = ["type": "start", "sample_rate": JSONValue(LiveAudio.rate), "format": "pcm_s16le", "language": .string(language)]
             try await socket.sendText(start.jsonText)
             try await Self.expectReady(socket)
+            // The streaming decoder drops or garbles the opening words without lead-in audio. One second of
+            // silence sent at once (not paced) fixed it and cut the first partial from about 4 s to under 1 s.
+            try await socket.sendBinary(Data(count: LiveAudio.rate * 2))
         } catch ASRError.busy {
             throw ASRError.busy
         } catch let error as ASRError {
