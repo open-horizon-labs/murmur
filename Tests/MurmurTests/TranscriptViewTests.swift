@@ -3,6 +3,7 @@ import SwiftUI
 import Foundation
 import XCTest
 @testable import MurmurApp
+@testable import MurmurCore
 
 final class TranscriptViewTests: XCTestCase {
     func testSelectionMapsAcrossEntriesWithoutIncludingTimestamps() throws {
@@ -20,6 +21,16 @@ final class TranscriptViewTests: XCTestCase {
         XCTAssertEqual(selection.text, "world Hello again")
         XCTAssertEqual(selection.entryIDs, ["first", "second"])
         XCTAssertNil(document.selection(for: NSRange(location: 0, length: 8)))
+    }
+
+    func testInterruptedPartialAndSystemNoticeRenderInDocument() {
+        var partial = entry("unfinished", "unfinished words", isFinal: false)
+        partial.wasInterrupted = true
+        XCTAssertTrue(TranscriptTextDocument(entries: [partial]).text.contains("· interrupted"))
+
+        let notice = entry("system:resumed", "Transcription resumed at 10:00")
+        let document = TranscriptTextDocument(entries: [notice])
+        XCTAssertNil(document.selection(for: NSRange(location: 0, length: (document.text as NSString).length)))
     }
 
     func testSelectionAnchorSurvivesTranscriptAppendAndRepeatedPassage() throws {

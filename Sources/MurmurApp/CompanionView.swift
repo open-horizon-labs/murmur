@@ -1,3 +1,4 @@
+import MurmurCore
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -1249,6 +1250,7 @@ private struct OpenAIModelIDSelector: View {
 
 struct MenuBarControls: View {
     let model: AppModel
+    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -1272,6 +1274,10 @@ struct MenuBarControls: View {
                 Button("Start listening", systemImage: "waveform") {
                     Task { await model.startLive() }
                 }
+            }
+            Divider()
+            Button("Open Live Call", systemImage: "text.bubble") {
+                openWindow(id: LiveCallWindow.id)
             }
         }
         .padding(14)

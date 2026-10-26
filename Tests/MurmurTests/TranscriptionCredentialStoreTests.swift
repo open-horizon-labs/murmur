@@ -1,6 +1,7 @@
 import Foundation
 import XCTest
 @testable import MurmurApp
+@testable import MurmurCore
 
 @MainActor
 final class TranscriptionCredentialStoreTests: XCTestCase {

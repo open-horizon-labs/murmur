@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Call Memory</title>
+<style>
+:root {
+  color-scheme: light dark;
+  --bg: light-dark(oklch(97% 0.008 85), oklch(19% 0.012 195));
+  --surface: light-dark(oklch(99% 0.004 85), oklch(23% 0.012 195));
+  --raised: light-dark(oklch(100% 0 0), oklch(27% 0.014 195));
+  --line: light-dark(oklch(88% 0.01 85), oklch(33% 0.014 195));
+  --text: light-dark(oklch(24% 0.015 195), oklch(92% 0.008 85));
+  --muted: light-dark(oklch(48% 0.015 195), oklch(72% 0.012 195));
+  --accent: light-dark(oklch(45% 0.09 195), oklch(78% 0.1 195));
+  --accent-ink: light-dark(oklch(98% 0.01 195), oklch(20% 0.03 195));
+  --accent-soft: light-dark(oklch(94% 0.03 195), oklch(30% 0.04 195));
+  --ok: light-dark(oklch(48% 0.12 150), oklch(78% 0.14 150));
+  --warn: light-dark(oklch(52% 0.12 75), oklch(80% 0.13 75));
+  --fail: light-dark(oklch(50% 0.17 25), oklch(74% 0.15 25));
+  --warn-soft: light-dark(oklch(95% 0.05 85), oklch(30% 0.05 75));
+  --ui: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --read: "Iowan Old Style", Charter, "Bitstream Charter", Georgia, serif;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.45 var(--ui); display: grid; grid-template-rows: auto 1fr; overflow: hidden; }
+::selection { background: var(--accent-soft); color: var(--text); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+button { font: inherit; color: inherit; cursor: pointer; }
+.num { font-variant-numeric: tabular-nums; }
+
+header { display: flex; align-items: center; gap: 20px; padding: 10px 20px; border-bottom: 1px solid var(--line); background: var(--surface); }
+.brand { font-weight: 600; font-size: 15px; letter-spacing: -0.01em; }
+.state { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; min-width: 150px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex: none; }
+.state[data-s="listening"] .dot { background: var(--ok); }
+.state[data-s="listening"] { color: var(--text); }
+.meters { display: flex; gap: 14px; margin-left: auto; font-size: 12px; color: var(--muted); }
+.meter { display: flex; align-items: center; gap: 6px; }
+.meter i { display: block; width: 56px; height: 4px; border-radius: 2px; background: var(--line); overflow: hidden; }
+.meter b { display: block; height: 100%; width: 100%; background: var(--accent); transform-origin: left; transform: scaleX(0); transition: transform 90ms linear; }
+.btn { white-space: nowrap; border: 1px solid var(--line); background: transparent; padding: 7px 14px; border-radius: 8px; font-weight: 600; }
+.btn:hover { background: var(--accent-soft); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.primary:hover { filter: brightness(1.06); }
+.btn:disabled { opacity: 0.5; cursor: default; filter: none; }
+kbd { font: 12px var(--ui); color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; margin-left: 8px; }
+.btn.primary kbd { color: var(--accent-ink); border-color: color-mix(in oklch, var(--accent-ink) 45%, transparent); }
+
+main { min-height: 0; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr); }
+section { min-height: 0; overflow: auto; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+#transcript { position: relative; border-right: 1px solid var(--line); padding: 8px 0 24px; }
+#notes { padding: 20px 24px 40px; background: var(--surface); }
+
+.line { display: grid; grid-template-columns: 74px minmax(0, 62ch); gap: 0 14px; padding: 7px 24px; scroll-margin: 60px; width: max-content; max-width: 100%; margin-inline: auto; }
+.line .who { text-align: right; font-size: 12px; color: var(--muted); padding-top: 4px; }
+.line .who b { display: block; font-size: 13px; color: var(--text); }
+.line.me .who b { color: var(--accent); }
+.line .txt { font: 17px/1.55 var(--read); }
+.line.me .txt { font-weight: 600; }
+.line.new { animation: settle 120ms var(--ease); }
+.line.flash { background: var(--accent-soft); transition: background 1.2s; }
+.line.partial .txt { color: var(--muted); font-weight: 400; }
+@keyframes settle { from { opacity: 0; transform: translateY(3px); } }
+#jump { position: sticky; bottom: 12px; margin: 0 auto; display: none; width: max-content; background: var(--text); color: var(--bg); border: 0; border-radius: 999px; padding: 6px 14px; font-size: 13px; }
+#jump.on { display: block; }
+
+h2 { margin: 28px 0 8px; font-size: 13px; font-weight: 600; color: var(--muted); letter-spacing: 0.02em; text-transform: none; }
+h2:first-child { margin-top: 0; }
+.catch { margin-bottom: 8px; background: var(--raised); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px 16px; box-shadow: 0 1px 2px light-dark(oklch(30% 0.02 195 / 0.06), oklch(0% 0 0 / 0.3)); }
+.catch-top { display: flex; align-items: center; gap: 10px; }
+.catch-top .btn { margin-right: auto; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; }
+.seg button:first-child { border-radius: 7px 0 0 7px; }
+.seg button:last-child { border-radius: 0 7px 7px 0; }
+.seg button:focus-visible { outline-offset: -2px; }
+.seg button { border: 0; background: transparent; padding: 5px 10px; font-size: 13px; color: var(--muted); }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--text); font-weight: 600; }
+.recap { margin-top: 12px; font: 17px/1.5 var(--read); }
+.recap .now { font-weight: 600; margin: 0 0 8px; }
+.recap ul { margin: 0; padding-left: 18px; }
+.recap li { margin: 4px 0; }
+.waiting { background: var(--warn-soft); border-radius: 8px; padding: 10px 12px; margin: 12px 0 10px; font: 16px/1.45 var(--read); }
+.waiting b { display: block; font: 600 13px var(--ui); margin-bottom: 4px; }
+.waiting.none { background: var(--accent-soft); }
+.waiting.none b { margin: 0; }
+.asof { margin: 10px 0 0; font-size: 13px; color: var(--muted); }
+.recap.stale .body { opacity: 0.55; }
+.recap .fresh { color: var(--warn); font-weight: 600; }
+.cite { font: 13px/1.3 var(--ui); color: var(--accent); background: none; border: 0; padding: 4px 6px; min-height: 24px; text-align: left; text-decoration: underline; text-underline-offset: 2px; }
+.tag { font: 600 11px var(--ui); color: var(--text); background: var(--warn-soft); border-radius: 4px; padding: 1px 6px; margin-left: 6px; white-space: nowrap; }
+.quiet { color: var(--muted); font-size: 13px; }
+
+.notes-list { margin: 0; padding: 0; list-style: none; font: 16px/1.5 var(--read); }
+.notes-list li { padding: 5px 0; }
+.summary { font: 17px/1.5 var(--read); margin: 0; }
+.finding { padding: 8px 0; }
+.finding strong { font-weight: 600; }
+.finding p { margin: 2px 0 4px; font: 15px/1.5 var(--read); color: var(--muted); }
+.unverified { font-size: 12px; color: var(--warn); }
+.meta { margin-top: 24px; font-size: 12px; color: var(--muted); }
+
+.prov { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.strip { display: none; padding: 8px 20px; font-size: 13px; background: light-dark(oklch(96% 0.05 75), oklch(28% 0.05 75)); border-bottom: 1px solid var(--line); }
+.strip.on { display: block; }
+
+#start { grid-column: 1 / -1; overflow: auto; padding: 8vh 24px 40px; }
+.hello { max-width: 560px; margin: 0 auto; }
+.hello h1 { font: 600 28px/1.15 var(--ui); letter-spacing: -0.02em; margin: 0 0 8px; text-wrap: balance; }
+.hello p { margin: 0 0 24px; color: var(--muted); font-size: 16px; text-wrap: pretty; }
+.checks { list-style: none; margin: 0 0 24px; padding: 0; border-top: 1px solid var(--line); }
+.checks li { display: grid; grid-template-columns: 16px 110px 1fr; gap: 10px; align-items: baseline; padding: 11px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+.checks .dot { margin-top: 5px; }
+.checks [data-s="ok"] .dot { background: var(--ok); }
+.checks [data-s="warn"] .dot { background: var(--warn); }
+.checks [data-s="fail"] .dot { background: var(--fail); }
+.checks b { font-weight: 600; }
+.checks small { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.actions .quiet { flex-basis: 100%; margin-top: 2px; }
+
+body[data-view="call"] #start { display: none; }
+body.ended .catch-top, body.ended #catchcard .quiet:first-child { display: none; }
+#copy[hidden] { display: none; }
+body[data-view="idle"] #transcript, body[data-view="idle"] #notes { display: none; }
+body[data-view="idle"] .meters { visibility: hidden; }
+body[data-view="idle"] #go { display: none; }
+
+.saved { background: var(--accent-soft); border-radius: 10px; padding: 12px 14px; margin-bottom: 18px; font-size: 14px; }
+.saved .btn { margin-top: 8px; margin-right: 6px; }
+
+@media (max-width: 760px) {
+  main { grid-template-columns: 1fr; grid-template-rows: auto 1fr; overflow: auto; }
+  #notes { order: -1; }
+  .meters, .prov { display: none; }
+  header { flex-wrap: wrap; gap: 8px 14px; }
+  #transcript { min-height: 55vh; border-right: 0; }
+  .line { grid-template-columns: 56px minmax(0, 1fr); padding-inline: 14px; }
+}
+@media (prefers-reduced-motion: reduce) { .line.new { animation: none; } .meter b { transition: none; } .line.flash { transition: none; } }
+</style>
+
+<header>
+  <span class="brand">Call Memory</span>
+  <span class="state" id="state" data-s="idle" role="status"><span class="dot"></span><span id="state-text">Not listening</span><span class="num" id="clock"></span></span>
+  <span class="prov" id="prov"></span>
+  <div class="meters" aria-hidden="true">
+    <span class="meter">me <i><b id="lv-me"></b></i></span>
+    <span class="meter">them <i><b id="lv-them"></b></i></span>
+  </div>
+  <button class="btn" id="copy" hidden>Copy notes</button>
+  <button class="btn primary" id="go">Start call</button>
+</header>
+<div class="strip" id="strip" role="status"></div>
+
+<main>
+  <div id="start">
+    <div class="hello">
+      <h1>Know what was said, and what is waiting on you.</h1>
+      <p>Call Memory transcribes your call on this computer as people speak and keeps notes you can check against the transcript.</p>
+      <ul class="checks" id="checks" aria-label="Before you start"></ul>
+      <div class="actions">
+        <button class="btn primary" id="go2">Start call</button>
+        <button class="btn" id="demo">Try a sample call</button>
+        <span class="quiet">The sample uses no audio and sends nothing out.</span>
+      </div>
+    </div>
+  </div>
+
+  <section id="transcript" aria-label="Transcript" tabindex="0"><div id="lines" role="log" aria-live="off"></div><button id="jump">Jump to latest</button></section>
+
+  <section id="notes" aria-label="Notes">
+    <div id="saved"></div>
+    <div class="catch" id="catchcard">
+      <div class="catch-top">
+        <button class="btn primary" id="catch">Catch me up<kbd>C</kbd></button>
+        <div class="seg" role="group" aria-label="How far back">
+          <button data-m="2" aria-pressed="false">2 min</button><button data-m="5" aria-pressed="true">5 min</button><button data-m="10" aria-pressed="false">10 min</button><button data-m="20" aria-pressed="false">20 min</button>
+        </div>
+      </div>
+      <div class="recap" id="recap" aria-live="polite"><span class="quiet" id="hint">Lost the thread? This summarizes the last few minutes and lists what is waiting on you.</span></div>
+    </div>
+    <div id="notebody"></div>
+  </section>
+</main>
+
+<script>
+const T = "__TOKEN__", H = {"X-Call-Memory-Token": T, "Content-Type": "application/json"};
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+const mmss = s => String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(Math.floor(s % 60)).padStart(2, "0");
+const api = async (path, body) => (await fetch(path, {method: "POST", headers: H, body: JSON.stringify(body || {})})).json();
+
+let entries = [], partials = {}, ctx = null, es = null, status = "idle", sample = false, pinned = true, minutes = 5, timer = null, t0 = 0, recapUpTo = 0, elapsed = 0;
+
+function setView(v) { document.body.dataset.view = v; }
+function setStatus(s) {
+  status = s;
+  const live = s === "listening";
+  $("state").dataset.s = s;
+  if (live) elapsed = 0;
+  $("state-text").textContent = {idle: "Not listening", listening: sample ? "Sample call" : "Listening", stopping: "Finishing…",
+    stopped: sample ? "Sample ended" : "Saved · " + mmss(elapsed)}[s] || s;
+  $("go").textContent = live ? "Stop call" : s === "stopping" ? "Finishing…" : s === "stopped" ? "New call" : "Start call";
+  $("go").classList.toggle("primary", !live);
+  $("go").disabled = s === "stopping";
+  $("catch").disabled = !entries.length || s === "stopped";
+  document.body.classList.toggle("ended", s === "stopped");
+  $("copy").hidden = s !== "stopped";
+  clearInterval(timer);
+  if (live) { t0 = Date.now(); timer = setInterval(tick, 1000); tick(); }
+}
+function tick() { elapsed = (Date.now() - t0) / 1000; $("clock").textContent = " · " + mmss(elapsed); }
+
+function lineHtml(e, cls) {
+  const who = e.speaker;
+  return `<div class="line ${who} ${cls || ""}" id="e${e.id ?? who}" data-start="${e.start ?? 0}"><div class="who"><b>${esc(who)}</b><span class="num">${e.start != null ? mmss(e.start) : ""}</span></div><div class="txt">${esc(e.text)}</div></div>`;
+}
+function drawLines(fresh) {
+  const box = $("lines");
+  entries.sort((a, b) => a.start - b.start);
+  box.innerHTML = entries.map(e => lineHtml(e, fresh === e.id ? "new" : "")).join("") +
+    Object.entries(partials).map(([w, t]) => lineHtml({speaker: w, text: t + " …"}, "partial")).join("");
+  if (pinned) $("transcript").scrollTop = $("transcript").scrollHeight;
+}
+$("transcript").addEventListener("scroll", () => {
+  const t = $("transcript");
+  pinned = t.scrollHeight - t.scrollTop - t.clientHeight < 60;
+  $("jump").classList.toggle("on", !pinned);
+});
+$("jump").onclick = () => { pinned = true; $("transcript").scrollTop = $("transcript").scrollHeight; $("jump").classList.remove("on"); };
+
+function cite(entry, quote) { return `<button class="cite" data-e="${entry}" title="Show in transcript">“${esc(quote)}”</button>`; }
+document.addEventListener("click", ev => {
+  const b = ev.target.closest("[data-e]"); if (!b) return;
+  const el = $("e" + b.dataset.e); if (!el) return;
+  pinned = false; el.scrollIntoView({block: "center"}); el.classList.add("flash"); setTimeout(() => el.classList.remove("flash"), 1400);
+});
+const snippet = id => { const e = entries.find(x => x.id === id); if (!e) return id; const w = e.text.split(/\s+/); return "“" + w.slice(0, 7).join(" ") + (w.length > 7 ? "…" : "") + "”"; };
+const chip = (id, text) => id ? `<button class="cite" data-e="${id}" title="Show in transcript">${esc(text || snippet(id))}</button>` : "";
+const noteItem = (x, kind) => { if (typeof x === "string") x = {text: x, evidence: []}; const ev = x.evidence || [];
+  return `<li>${esc(x.text)}${x.proposed ? `<span class="tag">Proposed</span>` : ""}${ev.length ? " " + ev.map(v => chip(v.entry, "“" + v.quote + "”")).join("") : `<span class="tag">No quote</span>`}</li>`; };
+const list = (t, a) => a && a.length ? `<h2>${t}</h2><ul class="notes-list">${a.map(noteItem).join("")}</ul>` : "";
+function drawNotes() {
+  if (!ctx) { $("notebody").innerHTML = ""; return; }
+  $("notebody").innerHTML = `<h2>So far</h2><p class="summary">${esc(ctx.summary || "")}</p>` +
+    list("Commitments", ctx.commitments) + list("Open questions", ctx.open_questions) + list("Decisions", ctx.decisions) +
+    ((ctx.findings || []).length ? "<h2>Evidence</h2>" + ctx.findings.map(f =>
+      `<div class="finding"><strong>${esc(f.title)}</strong><p>${esc(f.detail)}</p>` +
+      (f.evidence.length ? f.evidence.map(v => chip(v.entry, "“" + v.quote + "”")).join(" ") : `<span class="tag">No quote</span>`) + `</div>`).join("") : "") +
+    `<p class="meta">Notes by ${esc(ctx.model || "")} (${ctx.seconds}s). Spoken claims are not verified.</p>`;
+}
+function strip(text) { const s = $("strip"); s.textContent = text || ""; s.classList.toggle("on", !!text); }
+
+const NOTICE = [];
+function notice(t) { if (!NOTICE.includes(t)) NOTICE.push(t); strip(NOTICE.slice(-1)[0]); }
+
+function connect() {
+  if (es) es.close();
+  es = new EventSource("/api/events?t=" + T);
+  es.onmessage = m => {
+    const e = JSON.parse(m.data);
+    if (e.type === "entry") { entries.push(e.entry); delete partials[e.entry.speaker]; drawLines(e.entry.id); $("catch").disabled = false; markStale(); }
+    else if (e.type === "partial") { partials[e.speaker] = e.text; drawLines(); }
+    else if (e.type === "context") { if (e.context) { ctx = e.context; drawNotes(); } if (e.error) notice("Notes did not update: " + e.error + " Showing the last good notes."); }
+    else if (e.type === "notice") notice(e.text);
+    else if (e.type === "level") { level(e.channel, e.level); }
+    else if (e.type === "status") onStatus(e.status);
+  };
+}
+const lastLevel = {};
+function level(ch, v) { const b = $("lv-" + ch); if (!b) return; lastLevel[ch] = Date.now(); b.style.transform = `scaleX(${Math.max(0.04, v)})`; }
+setInterval(() => { for (const ch in lastLevel) if (Date.now() - lastLevel[ch] > 450) { $("lv-" + ch).style.transform = "scaleX(0.04)"; delete lastLevel[ch]; } }, 150);
+function onStatus(s) {
+  setStatus(s);
+  if (s === "stopped") {
+    es && es.close();
+    ["me", "them"].forEach(c => $("lv-" + c).style.transform = "scaleX(0)");
+    $("saved").innerHTML = `<div class="saved">${sample ? "Sample finished. Nothing was recorded." : "Saved on this computer. Audio goes to your archive on the next sync; the speaker-labelled transcript follows."}</div>`;
+  }
+}
+function notesText() {
+  if (!ctx) return entries.map(e => `${e.speaker}: ${e.text}`).join("\n");
+  const sec = (t, a) => a && a.length ? `\n${t}\n` + a.map(x => "- " + (x.text || x)).join("\n") + "\n" : "";
+  return `${ctx.summary}\n${sec("Commitments", ctx.commitments)}${sec("Open questions", ctx.open_questions)}${sec("Decisions", ctx.decisions)}`;
+}
+function reset() { entries = []; partials = {}; ctx = null; NOTICE.length = 0; strip(""); $("saved").innerHTML = ""; $("lines").innerHTML = ""; drawNotes(); $("recap").innerHTML = RECAP_HINT; recapUpTo = 0; $("prov").textContent = ""; $("copy").textContent = "Copy notes"; setStatus("idle"); setView("idle"); loadChecks(); }
+const RECAP_HINT = $("recap").innerHTML;
+$("copy").onclick = () => navigator.clipboard.writeText(notesText()).then(() => { $("copy").textContent = "Copied"; });
+
+async function begin(path) {
+  const r = await api(path);
+  if (!r.ok) { strip(r.message); return; }
+  sample = path === "/api/demo"; reset(); setView("call"); localStorage.setItem("cm-seen", "1");
+  setStatus("listening"); connect(); showProvenance();
+}
+async function showProvenance() {
+  const s = await (await fetch("/api/state", {headers: H})).json(), p = s.provenance || {};
+  $("prov").textContent = sample ? "Sample call · nothing is recorded or sent" : p.heard ? `Heard by ${p.heard} · Notes by ${p.notes}${p.notes_host ? `, call text goes to ${p.notes_host}` : ""}` : "";
+}
+async function toggle() { if (status === "listening") api("/api/stop"); else if (status === "stopped") reset(); else begin("/api/start"); }
+$("go").onclick = toggle; $("go2").onclick = () => begin("/api/start"); $("demo").onclick = () => begin("/api/demo");
+
+async function catchUp() {
+  const b = $("catch"); if (b.disabled) return;
+  b.disabled = true; b.firstChild.textContent = "Summarizing…";
+  try {
+    const r = await api("/api/recap", {minutes});
+    if (!r.ok) { $("recap").innerHTML = `<span class="unverified">${esc(r.message)} Try again.</span>`; return; }
+    const c = r.recap;
+    recapUpTo = Math.max(0, ...entries.map(e => e.id));
+    const asks = c.asks_of_me.length
+      ? `<div class="waiting"><b>Waiting on you</b>${c.asks_of_me.map(a => `<div>${esc(a.text)} ${chip(a.entry)}</div>`).join("")}</div>`
+      : `<div class="waiting none"><b>Nothing waiting on you.</b></div>`;
+    $("recap").classList.remove("stale");
+    $("recap").innerHTML = `<div class="body">${asks}<p class="now">${esc(c.now)}</p><ul>` +
+      c.points.map(p => `<li>${esc(p.text)} ${p.entries.map(i => chip(i)).join(" ")}</li>`).join("") + "</ul></div>" +
+      `<p class="asof" id="asof">As of ${mmss(c.to_s)} · covers ${mmss(c.from_s)}–${mmss(c.to_s)}</p>`;
+  } finally { b.firstChild.textContent = "Catch me up"; b.disabled = !entries.length; }
+}
+$("catch").onclick = catchUp;
+document.querySelectorAll(".seg button").forEach(b => b.onclick = () => { minutes = +b.dataset.m; document.querySelectorAll(".seg button").forEach(x => x.setAttribute("aria-pressed", x === b)); });
+function markStale() {
+  if (!recapUpTo) return;
+  const n = entries.filter(e => e.id > recapUpTo).length;
+  if (!n) return;
+  $("recap").classList.add("stale");
+  const a = $("asof"); if (a) { a.dataset.base = a.dataset.base || a.textContent; a.innerHTML = esc(a.dataset.base) + ` · <span class="fresh">${n} new line${n > 1 ? "s" : ""}. Press Catch me up.</span>`; }
+}
+document.addEventListener("keydown", e => { if (e.target.closest("input,textarea") || e.metaKey || e.ctrlKey || e.altKey) return; if (e.key === "c" && document.body.dataset.view === "call") catchUp(); });
+
+async function loadChecks() {
+  const r = await (await fetch("/api/readiness", {headers: H})).json();
+  $("checks").innerHTML = r.rows.map(x => `<li data-s="${x.state}"><span class="dot"></span><b>${esc(x.label)}</b><span>${esc(x.detail)}${x.fix ? `<small>${esc(x.fix)}</small>` : ""}</span></li>`).join("");
+  $("go").disabled = $("go2").disabled = !r.can_start;
+  const first = !localStorage.getItem("cm-seen");
+  $("demo").classList.toggle("primary", first); $("go2").classList.toggle("primary", !first);
+}
+(async () => {
+  setView("idle"); setStatus("idle");
+  const s = await (await fetch("/api/state", {headers: H})).json();
+  if (s.status === "listening" || s.status === "stopping") { sample = !!s.sample; entries = s.entries || []; partials = s.partials || {}; ctx = s.context; setView("call"); drawLines(); drawNotes(); onStatus(s.status); connect(); }
+  else loadChecks();
+})();
+</script>

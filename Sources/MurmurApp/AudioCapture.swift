@@ -1,6 +1,7 @@
 @preconcurrency import AVFAudio
 import CoreMedia
 import Foundation
+import MurmurCore
 import ScreenCaptureKit
 
 final class AudioCaptureCoordinator: NSObject, SCStreamOutput, SCStreamDelegate, @unchecked Sendable {
