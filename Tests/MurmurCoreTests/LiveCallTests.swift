@@ -469,11 +469,11 @@ final class LiveSessionTests: XCTestCase {
         let root = tmp.appendingPathComponent("root")
         let session = LiveSession(root: root, asr: FakeLiveASR(), agent: CountingAgent(), channels: ["mic", "system"],
                                   sourceFactory: { _ in FakeSource() }, minInterval: 0,
-                                  provenance: ["heard": "homelab ASR", "notes": "mercury-2", "notes_host": "api.inceptionlabs.ai"])
+                                  provenance: ["heard": "homelab ASR", "notes": "mercury-3", "notes_host": "api.inceptionlabs.ai"])
         let events = session.subscribe()
         try session.start()
         await session.stop()
-        XCTAssertEqual(session.state()["provenance"], ["heard": "homelab ASR", "notes": "mercury-2", "notes_host": "api.inceptionlabs.ai"])
+        XCTAssertEqual(session.state()["provenance"], ["heard": "homelab ASR", "notes": "mercury-3", "notes_host": "api.inceptionlabs.ai"])
         let entries = session.transcript.snapshot()
         XCTAssertEqual(entries.map(\.speaker).sorted(), ["me", "them"])
         XCTAssertEqual(session.context?["summary"]?.stringValue, "2 entries")
@@ -571,7 +571,7 @@ final class LiveSettingsTests: XCTestCase {
         let settings = LiveSettings.load(root: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString))
         XCTAssertNoThrow(try settings.validate())
         XCTAssertFalse(LiveSettings.defaultsJSON.jsonText.contains("sk-"))
-        XCTAssertEqual(settings.llm.model, "mercury-2")
+        XCTAssertEqual(settings.llm.model, "mercury-3")
         XCTAssertEqual(settings.llm.baseURL, "https://api.inceptionlabs.ai/v1")
         XCTAssertEqual(settings.llm.reasoningEffort, "low")
     }
@@ -665,11 +665,11 @@ final class LiveChatClientTests: XCTestCase {
         XCTAssertEqual(request.url?.absoluteString, "https://api.inceptionlabs.ai/v1/chat/completions")
         XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer test-key")
         let body = try XCTUnwrap(JSONValue.parse(request.httpBody ?? Data()))
-        XCTAssertEqual(body["model"]?.stringValue, "mercury-2")
+        XCTAssertEqual(body["model"]?.stringValue, "mercury-3")
         XCTAssertEqual(body["reasoning_effort"]?.stringValue, "low")
         XCTAssertEqual(body["max_tokens"]?.intValue, 4000)
         XCTAssertEqual(body["tools"]?.arrayValue?.count, 2)
-        XCTAssertEqual(client.label, "mercury:mercury-2")
+        XCTAssertEqual(client.label, "mercury:mercury-3")
     }
 
     func testRetriesOnceOnRateLimitThenReportsStatus() async throws {
