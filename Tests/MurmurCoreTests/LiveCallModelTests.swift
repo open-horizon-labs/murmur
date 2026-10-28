@@ -18,7 +18,7 @@ final class ScriptedCall: LiveCallControlling, @unchecked Sendable {
     var recapReply: JSONValue = [:]
     var recapError: Error?
     var startError: Error?
-    var provenance: JSONValue = ["heard": "homelab ASR", "notes": "mercury-2", "notes_host": "api.inceptionlabs.ai"]
+    var provenance: JSONValue = ["heard": "homelab ASR", "notes": "mercury-3", "notes_host": "api.inceptionlabs.ai"]
     private(set) var recapMinutes: [Int] = []
 
     init(sample: Bool = false) { isSample = sample }
@@ -121,7 +121,7 @@ final class LiveCallModelTests: XCTestCase {
         let call = ScriptedCall()
         let (model, _) = makeModel(call)
         model.startCall()
-        XCTAssertEqual(model.provenanceText, "Heard by homelab ASR · Notes by mercury-2, call text goes to api.inceptionlabs.ai")
+        XCTAssertEqual(model.provenanceText, "Heard by homelab ASR · Notes by mercury-3, call text goes to api.inceptionlabs.ai")
         call.emit(["type": "partial", "speaker": "them", "text": "we agreed to"])
         call.say(2, "me", 5, "second")
         call.say(1, "them", 1, "first")

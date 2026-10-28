@@ -27,7 +27,7 @@ public struct LiveSettings: Sendable, Equatable {
         "language": "en-US",
         "asr": ["homelab_url": "", "cloud_fallback": false,
                 "cloud": ["base_url": "https://api.openai.com/v1", "model": "gpt-transcribe", "key_env": "OPENAI_API_KEY", "key_command": []]],
-        "llm": ["provider": "mercury", "base_url": "https://api.inceptionlabs.ai/v1", "model": "mercury-2",
+        "llm": ["provider": "mercury", "base_url": "https://api.inceptionlabs.ai/v1", "model": "mercury-3",
                 "reasoning_effort": "low", "key_env": "INCEPTION_API_KEY", "key_command": []]
     ]
 

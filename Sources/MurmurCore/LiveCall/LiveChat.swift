@@ -13,7 +13,7 @@ public struct LLMError: Error, LocalizedError, Sendable {
 public struct LLMConfig: Sendable, Equatable {
     public var provider = "mercury"
     public var baseURL = "https://api.inceptionlabs.ai/v1"
-    public var model = "mercury-2"
+    public var model = "mercury-3"
     public var reasoningEffort: String? = "low"
     public var keyEnv = "INCEPTION_API_KEY"
     public var keyCommand: [String] = []
